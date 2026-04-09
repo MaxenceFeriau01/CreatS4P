@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: creatify-db
+    environment:
+      POSTGRES_DB: creatify
+      POSTGRES_USER: creatify
+      POSTGRES_PASSWORD: creatify123
+    ports:
+      - "5432:5432"
+    volumes:
+      - creatify_data:/var/lib/postgresql/data
+
+volumes:
+  creatify_data:
