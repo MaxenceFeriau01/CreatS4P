@@ -8,9 +8,12 @@ import java.util.List;
 @Repository
 public interface CreationRepository extends JpaRepository<Creation, Long> {
 
-    List<Creation> findByTypeCreationOrderByDateCreationDesc(String typeCreation);
-
     List<Creation> findAllByOrderByDateCreationDesc();
 
+    List<Creation> findByTypeCreationOrderByDateCreationDesc(String typeCreation);
+
     List<Creation> findByEstAnonymeOrderByDateCreationDesc(Boolean estAnonyme);
+
+    /** Récupère uniquement les créations avec étapes/matériaux (mode complet) */
+    List<Creation> findByEstActiviteTrueOrderByDateCreationDesc();
 }

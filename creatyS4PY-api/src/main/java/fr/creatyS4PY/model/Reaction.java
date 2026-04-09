@@ -1,5 +1,6 @@
 package fr.creatyS4PY.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -17,8 +18,9 @@ public class Reaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creation_id", nullable = false)
+    @JsonBackReference
     private Creation creation;
 
     @Enumerated(EnumType.STRING)
