@@ -11,22 +11,40 @@ export default function BottomNav() {
   const location = useLocation()
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex items-center justify-around px-4 py-2 z-50">
-      {tabs.map(tab => {
-        const active = location.pathname === tab.path
-        return (
-          <button
-            key={tab.path}
-            onClick={() => navigate(tab.path)}
-            className={`flex flex-col items-center gap-1 px-5 py-2 rounded-xl transition-all ${active ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}
-          >
-            <span className="text-xl">{tab.icon}</span>
-            <span className={`text-xs font-medium ${active ? 'text-emerald-600' : 'text-gray-400'}`}>
-              {tab.label}
-            </span>
-          </button>
-        )
-      })}
+    <div className="fixed bottom-0 left-0 right-0 z-50">
+      {/* Fond dégradé émeraude foncé */}
+      <div className="bg-emerald-800 px-4 pt-3 pb-5 flex items-center justify-around shadow-2xl">
+        {tabs.map(tab => {
+          const active = location.pathname === tab.path
+          return (
+            <button
+              key={tab.path}
+              onClick={() => navigate(tab.path)}
+              className={`flex flex-col items-center gap-1.5 px-6 py-2 rounded-2xl transition-all duration-150 active:scale-95 ${
+                active
+                  ? 'bg-white/20'
+                  : 'hover:bg-white/10'
+              }`}
+            >
+              {/* Icône dans un cercle si actif */}
+              <div className={`flex items-center justify-center transition-all duration-150 ${
+                active
+                  ? 'w-12 h-12 rounded-2xl bg-orange-500 shadow-lg -mt-6'
+                  : 'w-10 h-10'
+              }`}>
+                <span className={`${active ? 'text-3xl' : 'text-2xl'}`}>
+                  {tab.icon}
+                </span>
+              </div>
+              <span className={`font-bold text-sm transition-colors ${
+                active ? 'text-white' : 'text-emerald-300'
+              }`}>
+                {tab.label}
+              </span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

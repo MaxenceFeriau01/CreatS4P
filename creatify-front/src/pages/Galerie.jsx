@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getCreations, addReaction } from '../api/index'
+import { getCreations } from '../api/index'
 import BottomNav from '../components/BottomNav'
 
 const TYPES = ['Tout voir', 'Bijou', 'Collage', 'Bois', 'Argile', 'Peinture', 'Nature', 'Récup']
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+}
 
 export default function Galerie() {
   const navigate = useNavigate()
@@ -13,56 +19,57 @@ export default function Galerie() {
 
   useEffect(() => {
     getCreations()
-      .then(res => setCreations(res.data))
+      .then(res => {
+        const data = res.data
+        setCreations(Array.isArray(data) ? data : [])
+      })
+      .catch(() => setCreations([]))
       .finally(() => setLoading(false))
   }, [])
 
-  const handleReaction = async (id, type) => {
-    await addReaction(id, { type })
-    setCreations(prev => prev.map(c => {
-      if (c.id !== id) return c
-      return { ...c, reactions: [...(c.reactions || []), { type }] }
-    }))
-  }
-
-  const countReaction = (creation, type) =>
-    (creation.reactions || []).filter(r => r.type === type).length
-
-  const filtered = filtre === 'Tout voir'
-    ? creations
-    : creations.filter(c => c.typeCreation?.toLowerCase().includes(filtre.toLowerCase()))
+  const filtered = Array.isArray(creations)
+    ? (filtre === 'Tout voir'
+        ? creations
+        : creations.filter(c => c.typeCreation?.toLowerCase().includes(filtre.toLowerCase())))
+    : []
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <nav className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-        <span className="font-black text-2xl text-emerald-800 cursor-pointer" onClick={() => navigate('/')}>
-          creat<span className="text-orange-500">ify</span>
+    <div className="min-h-screen pb-28" style={{ background: '#f0faf5' }}>
+
+      {/* NAV — sans bouton Partager */}
+      <nav className="bg-emerald-800 px-6 py-5 flex items-center justify-between">
+        <span
+          className="font-black text-3xl tracking-tight cursor-pointer"
+          onClick={() => navigate('/')}
+        >
+          <span className="text-white">Creat</span>
+          <span className="text-orange-400">S4</span>
+          <span className="text-emerald-300">pY</span>
         </span>
-        <div className="flex items-center gap-3">
-          <span className="text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-medium">Sans inscription</span>
-          <button
-            onClick={() => navigate('/partager')}
-            className="bg-orange-500 text-white text-sm px-4 py-2 rounded-xl font-medium hover:bg-orange-600 transition-colors"
-          >
-            + Partager
-          </button>
-        </div>
+        <span className="text-sm bg-white/20 text-white px-4 py-1.5 rounded-full font-semibold">
+          Sans inscription
+        </span>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="font-black text-3xl text-gray-900 mb-1">
-            Les <span className="text-emerald-600">créations</span> de la communauté
+      <div className="max-w-2xl mx-auto px-5 py-8">
+
+        {/* Titre */}
+        <div className="mb-7">
+          <h1 className="font-black text-3xl text-gray-900 mb-2 leading-tight">
+            Les créations de la <span className="text-emerald-600">communauté</span> 🎨
           </h1>
-          <p className="text-gray-400 text-sm">Des œuvres faites à la main, partagées avec fierté.</p>
+          <p className="text-gray-500 text-lg">
+            Clique sur une création pour voir comment la reproduire !
+          </p>
         </div>
 
-        <div className="flex gap-2 flex-wrap mb-6">
+        {/* Filtres */}
+        <div className="flex gap-2 flex-wrap mb-7">
           {TYPES.map(t => (
             <button
               key={t}
               onClick={() => setFiltre(t)}
-              className={`px-4 py-1.5 rounded-full text-sm border transition-all duration-150 ${
+              className={`px-4 py-2 rounded-2xl text-base font-bold border-2 transition-all duration-150 ${
                 filtre === t
                   ? 'bg-emerald-600 text-white border-emerald-600'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-emerald-400 hover:text-emerald-600'
@@ -73,76 +80,107 @@ export default function Galerie() {
           ))}
         </div>
 
+        {/* Chargement */}
         {loading && (
           <div className="text-center py-20">
-            <div className="text-5xl mb-4">🎨</div>
-            <p className="text-gray-400">Chargement des créations...</p>
+            <div className="text-6xl mb-4 animate-bounce">🎨</div>
+            <p className="text-gray-500 text-lg font-semibold">Chargement des créations...</p>
           </div>
         )}
 
+        {/* Vide */}
         {!loading && filtered.length === 0 && (
           <div className="text-center py-20">
-            <div className="text-5xl mb-4">🌱</div>
-            <p className="text-gray-400 mb-4">Pas encore de créations ici.</p>
+            <div className="text-6xl mb-5">🌱</div>
+            <p className="text-gray-600 text-xl font-bold mb-2">Pas encore de créations ici.</p>
+            <p className="text-gray-400 text-base mb-7">Sois le premier à partager !</p>
             <button
               onClick={() => navigate('/partager')}
-              className="bg-emerald-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-emerald-700 transition-colors"
+              className="bg-emerald-600 text-white text-lg font-black px-8 py-5 rounded-3xl hover:bg-emerald-700 transition-colors"
             >
-              Sois le premier à partager !
+              + Partager ma création
             </button>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {filtered.map(c => (
-            <div
-              key={c.id}
-              className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-150"
-            >
-              <div className="h-40 bg-emerald-50 flex items-center justify-center text-6xl">
-                {c.imageUrl
-                  ? <img src={c.imageUrl} alt={c.titre} className="w-full h-full object-cover" />
-                  : '🎨'}
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 text-xs font-medium flex items-center justify-center flex-shrink-0">
-                    {c.pseudo ? c.pseudo[0].toUpperCase() : '?'}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">{c.pseudo || 'Anonyme'}</div>
-                    <div className="text-xs text-gray-400">
-                      {c.dateCreation ? new Date(c.dateCreation).toLocaleDateString('fr-FR') : ''}
+        {/* Grille */}
+        <div className="flex flex-col gap-4">
+          {filtered.map(c => {
+            const auteur = c.estAnonyme || !c.pseudo ? 'Anonyme' : c.pseudo
+            const initiale = auteur === 'Anonyme' ? '?' : auteur[0].toUpperCase()
+            const totalReactions = (c.reactions || []).length
+            const estActivite = c.estActivite === true
+
+            return (
+              <button
+                key={c.id}
+                onClick={() => navigate(`/creation/${c.id}`)}
+                className="w-full bg-white rounded-3xl border-2 border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 hover:border-emerald-200 transition-all duration-150 text-left active:scale-98"
+              >
+                {/* Image */}
+                <div className="h-52 bg-emerald-50 flex items-center justify-center overflow-hidden">
+                  {c.imageUrl
+                    ? <img src={c.imageUrl} alt={c.titre} className="w-full h-full object-cover" />
+                    : <span className="text-7xl">🎨</span>
+                  }
+                </div>
+
+                <div className="p-5">
+                  {/* Badge activité communautaire */}
+                  {estActivite && (
+                    <span className="inline-block bg-amber-100 text-amber-700 text-sm font-bold px-3 py-1 rounded-full mb-3">
+                      🛠️ Activité complète
+                    </span>
+                  )}
+
+                  {/* Auteur + date */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 text-lg font-black flex items-center justify-center flex-shrink-0">
+                      {initiale}
                     </div>
+                    <div className="flex-1">
+                      <p className="text-base font-black text-gray-900">{auteur}</p>
+                      <p className="text-sm text-gray-400">{formatDate(c.dateCreation)}</p>
+                    </div>
+                    {c.typeCreation && (
+                      <span className="bg-orange-100 text-orange-700 text-sm font-bold px-3 py-1 rounded-full">
+                        {c.typeCreation}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Titre */}
+                  <p className="font-black text-xl text-gray-900 mb-2 leading-tight">
+                    {c.titre}
+                  </p>
+
+                  {/* Description courte */}
+                  {c.description && (
+                    <p className="text-gray-500 text-base leading-relaxed mb-3 line-clamp-2">
+                      {c.description}
+                    </p>
+                  )}
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between mt-2">
+                    <div>
+                      {totalReactions > 0 && (
+                        <span className="text-base text-gray-400 font-semibold">
+                          {totalReactions} réaction{totalReactions > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-emerald-600 font-black text-base">
+                      Voir en détail →
+                    </span>
                   </div>
                 </div>
-                <div className="font-semibold text-sm mb-1">{c.titre}</div>
-                <div className="text-xs text-gray-400 leading-relaxed mb-3">{c.description}</div>
-                {c.typeCreation && (
-                  <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
-                    {c.typeCreation}
-                  </span>
-                )}
-              </div>
-              <div className="flex gap-1 px-4 pb-3 border-t border-gray-50 pt-2">
-                {[
-                  { type: 'ETOILE', emoji: '⭐' },
-                  { type: 'COEUR', emoji: '❤️' },
-                  { type: 'APPLAUDISSEMENT', emoji: '👏' }
-                ].map(({ type, emoji }) => (
-                  <button
-                    key={type}
-                    onClick={() => handleReaction(c.id, type)}
-                    className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700 hover:bg-gray-100 px-2 py-1.5 rounded-lg transition-all duration-150 font-medium"
-                  >
-                    {emoji} {countReaction(c, type)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+              </button>
+            )
+          })}
         </div>
       </div>
+
       <BottomNav />
     </div>
   )
