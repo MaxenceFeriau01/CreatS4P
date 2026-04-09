@@ -23,7 +23,6 @@ public class Activite {
     private String description;
 
     private String icone;
-
     private String couleur;
 
     @Column(name = "duree_minutes")
@@ -31,6 +30,12 @@ public class Activite {
 
     @Enumerated(EnumType.STRING)
     private Difficulte difficulte;
+
+    @Column(name = "conseil_accompagnant", columnDefinition = "TEXT")
+    private String conseilAccompagnant;
+
+    @Column(name = "nombre_participants")
+    private String nombreParticipants;
 
     @ElementCollection
     @CollectionTable(name = "activite_tags")
@@ -47,6 +52,17 @@ public class Activite {
     @ElementCollection
     @CollectionTable(name = "activite_ages")
     private List<String> ages;
+
+    @ElementCollection
+    @CollectionTable(name = "activite_materiaux")
+    @Column(name = "materiau")
+    private List<String> materiaux;
+
+    @ElementCollection
+    @OrderColumn(name = "etape_ordre")
+    @CollectionTable(name = "activite_etapes")
+    @Column(name = "etape", columnDefinition = "TEXT")
+    private List<String> etapes;
 
     @Column(name = "fiche_pro")
     private Boolean fichePro;

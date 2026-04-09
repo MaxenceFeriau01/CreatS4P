@@ -7,7 +7,11 @@ import fr.creatyS4PY.repository.ReactionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/creations")
@@ -17,6 +21,8 @@ public class CreationController {
 
     private final CreationRepository creationRepository;
     private final ReactionRepository reactionRepository;
+
+    private static final String UPLOAD_DIR = "uploads/";
 
     @GetMapping
     public ResponseEntity<List<Creation>> getAll() {
@@ -35,10 +41,21 @@ public class CreationController {
         return ResponseEntity.ok(creationRepository.save(creation));
     }
 
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
+        try {
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) Files.createDirectories(uploadPath);
+            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Files.copy(file.getInputStream(), uploadPath.resolve(filename), StandardCopyOption.REPLACE_EXISTING);
+            return ResponseEntity.ok("/uploads/" + filename);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body("Erreur upload");
+        }
+    }
+
     @PostMapping("/{id}/reactions")
-    public ResponseEntity<Reaction> addReaction(
-            @PathVariable Long id,
-            @RequestBody Reaction reaction) {
+    public ResponseEntity<Reaction> addReaction(@PathVariable Long id, @RequestBody Reaction reaction) {
         return creationRepository.findById(id).map(creation -> {
             reaction.setCreation(creation);
             return ResponseEntity.ok(reactionRepository.save(reaction));
