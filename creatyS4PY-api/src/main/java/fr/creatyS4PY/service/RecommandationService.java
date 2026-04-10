@@ -8,9 +8,7 @@ import fr.creatyS4PY.repository.ActiviteRepository;
 import fr.creatyS4PY.repository.CreationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,6 +17,22 @@ public class RecommandationService {
 
     private final ActiviteRepository activiteRepository;
     private final CreationRepository creationRepository;
+
+    // ── Mapping goûts front → goûts/tags back ───────────────────────
+    // Permet d'élargir la recherche à des synonymes ou tags proches
+    private static final Map<String, List<String>> GOUT_ALIASES = new HashMap<>();
+    static {
+        GOUT_ALIASES.put("informatique", List.of("informatique", "numérique", "Informatique", "Numérique"));
+        GOUT_ALIASES.put("musique",      List.of("musique", "Musique", "rythme"));
+        GOUT_ALIASES.put("creer",        List.of("creer", "créer"));
+        GOUT_ALIASES.put("recup",        List.of("recup", "récup", "Récup"));
+        GOUT_ALIASES.put("calme",        List.of("calme", "Calme"));
+        GOUT_ALIASES.put("construire",   List.of("construire", "Construire", "Construction"));
+        GOUT_ALIASES.put("couleurs",     List.of("couleurs", "Couleurs"));
+        GOUT_ALIASES.put("nature",       List.of("nature", "Nature"));
+        GOUT_ALIASES.put("bijoux",       List.of("bijoux", "Bijoux", "Bijou"));
+        GOUT_ALIASES.put("offrir",       List.of("offrir", "Offrir"));
+    }
 
     public List<RecommandationResponse> recommander(RecommandationRequest request) {
         List<RecommandationResponse> resultats = new ArrayList<>();
@@ -41,9 +55,8 @@ public class RecommandationService {
         for (Creation creation : creationsActivites) {
             int score = calculerScoreCreation(creation, request);
             if (score > 0) {
-                // On convertit la création en Activite pour réutiliser la structure existante
                 Activite activiteFromCreation = Activite.builder()
-                    .id(-(creation.getId())) // ID négatif pour distinguer des activités officielles
+                    .id(-(creation.getId()))
                     .titre(creation.getTitre())
                     .description(creation.getDescription())
                     .icone("🌟")
@@ -53,7 +66,8 @@ public class RecommandationService {
                     .materiaux(creation.getMateriaux())
                     .etapes(creation.getEtapes())
                     .ages(creation.getAges())
-                    .tags(List.of(creation.getTypeCreation() != null ? creation.getTypeCreation() : "Communauté"))
+                    .tags(List.of(creation.getTypeCreation() != null ?
+                        creation.getTypeCreation() : "Communauté"))
                     .fichePro(false)
                     .build();
 
@@ -83,15 +97,32 @@ public class RecommandationService {
 
         if (request.getGouts() != null && activite.getGouts() != null) {
             for (String gout : request.getGouts()) {
-                if (activite.getGouts().contains(gout)) score += 2;
+                // Correspondance directe sur les goûts
+                if (activite.getGouts().contains(gout)) {
+                    score += 2;
+                }
+                // Correspondance élargie via aliases (notamment pour informatique, musique...)
+                List<String> aliases = GOUT_ALIASES.getOrDefault(gout, List.of(gout));
+                if (activite.getTags() != null) {
+                    for (String alias : aliases) {
+                        if (activite.getTags().stream()
+                                .anyMatch(tag -> tag.equalsIgnoreCase(alias))) {
+                            score += 2;
+                            break; // on ne compte qu'une fois par goût
+                        }
+                    }
+                }
             }
         }
+
         if (request.getMotric() != null && activite.getMotric() != null) {
             if (activite.getMotric().contains(request.getMotric())) score += 1;
         }
+
         if (request.getAge() != null && activite.getAges() != null) {
             if (activite.getAges().contains(request.getAge())) score += 1;
         }
+
         return score;
     }
 
@@ -99,19 +130,22 @@ public class RecommandationService {
     private int calculerScoreCreation(Creation creation, RecommandationRequest request) {
         int score = 0;
 
-        // Score de base : c'est une création communautaire avec étapes = bonus
-        score += 1;
+        score += 1; // bonus de base
 
-        // Âge
         if (request.getAge() != null && creation.getAges() != null) {
             if (creation.getAges().contains(request.getAge())) score += 2;
         }
 
-        // Type de création ↔ goûts
         if (request.getGouts() != null && creation.getTypeCreation() != null) {
             String type = creation.getTypeCreation().toLowerCase();
             for (String gout : request.getGouts()) {
-                if (type.contains(gout) || gout.contains(type)) score += 1;
+                List<String> aliases = GOUT_ALIASES.getOrDefault(gout, List.of(gout));
+                for (String alias : aliases) {
+                    if (type.contains(alias.toLowerCase()) || alias.toLowerCase().contains(type)) {
+                        score += 1;
+                        break;
+                    }
+                }
             }
         }
 

@@ -1,0 +1,28 @@
+# ── Étape 1 : Build avec Maven ──────────────────────────
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
+
+WORKDIR /app
+
+# Copier le pom.xml en premier pour profiter du cache Docker
+COPY pom.xml .
+RUN mvn dependency:go-offline -q
+
+# Copier les sources et builder
+COPY src ./src
+RUN mvn package -DskipTests -q
+
+# ── Étape 2 : Image de production légère ────────────────
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /app
+
+# Copier le jar buildé
+COPY --from=builder /app/target/*.jar app.jar
+
+# Utilisateur non-root pour la sécurité
+RUN addgroup -S spring && adduser -S spring -G spring
+USER spring
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]

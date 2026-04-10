@@ -5,6 +5,7 @@ import Galerie from './pages/Galerie'
 import Partager from './pages/Partager'
 import ActiviteDetail from './pages/ActiviteDetail'
 import CreationDetail from './pages/CreationDetail'
+import NotFound from './pages/NotFound'
 
 function App() {
   return (
@@ -16,6 +17,8 @@ function App() {
         <Route path="/partager" element={<Partager />} />
         <Route path="/activite/:id" element={<ActiviteDetail />} />
         <Route path="/creation/:id" element={<CreationDetail />} />
+        <Route path="/404" element={<NotFound />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )
