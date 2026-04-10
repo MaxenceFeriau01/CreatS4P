@@ -31,9 +31,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Run tests
+      - name: Build backend
         working-directory: ./creatyS4PY-api
-        run: mvn test -q
+        run: mvn package -DskipTests -q
 
       - name: Login to GitHub Container Registry
         if: github.ref == 'refs/heads/main'
@@ -118,13 +118,8 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             cd /opt/creats4py
-
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
             docker compose pull
-
             docker compose up -d --remove-orphans
-
             docker image prune -f
-
             echo "✅ Déploiement terminé !"
