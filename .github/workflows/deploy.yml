@@ -8,8 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACK_IMAGE: ghcr.io/${{ github.repository_owner }}/creats4py-back
-  FRONT_IMAGE: ghcr.io/${{ github.repository_owner }}/creats4py-front
+  BACK_IMAGE: ghcr.io/maxenceferiau01/creats4py-back
+  FRONT_IMAGE: ghcr.io/maxenceferiau01/creats4py-front
 
 jobs:
 
